@@ -205,27 +205,27 @@ const ClientLogos = () => {
     const logos = [
         {
             name: 'Dark Matter Design',
-            url: './logos/Dark Matter Design.jpg',
+            url: '/logos/Dark Matter Design.jpg',
             website: 'https://darkmatterdesign.com'
         },
         {
             name: 'Nobody NFT',
-            url: './logos/nobodyNFT.png',
+            url: '/logos/nobodyNFT.png',
             website: 'https://nobody.xyz'
         },
         {
             name: 'Memorigin',
-            url: './logos/memorigin.png',
+            url: '/logos/memorigin.png',
             website: 'https://memorigin.store'
         },
         {
             name: 'The Military Show',
-            url: './logos/The Military Show.jpg',
+            url: '/logos/The Military Show.jpg',
             website: 'https://www.youtube.com/@TheMilitaryShow'
         },
         {
             name: 'Huawei Slovenia',
-            url: './logos/huawei-logo.png',
+            url: '/logos/huawei-logo.png',
             website: 'https://consumer.huawei.com/si/'
         }
     ];

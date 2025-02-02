@@ -29,5 +29,5 @@ export default defineConfig({
     include: ['imagesloaded', 'react', 'react-dom', 'jquery']
   },
   publicDir: 'public',
-  base: './'
+  base: '/'
 }) 
