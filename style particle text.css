@@ -1,0 +1,58 @@
+body {
+  font-family: 'Bebas Neue', sans-serif;
+  margin: 0;
+  overflow-x: hidden;
+  background: transparent;
+  background-attachment: fixed;
+  min-height: 300vh; /* Minimum height for scrolling content */
+  position: relative;
+}
+
+.canvas-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 1;
+}
+
+.triggers {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 10;
+  pointer-events: none;
+  color: white;
+  opacity: 0; /* Hide the text container */
+  font-family: 'Bebas Neue', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.triggers span {
+  display: block;
+  font-size: 24px;
+  margin: 20px 0;
+  padding: 2px 4px;
+  transition: opacity 0.5s, color 0.5s;
+  opacity: 0;
+  user-select: none; /* Prevent text selection */
+}
+
+.triggers span.active {
+  opacity: 0; /* Keep text hidden even when active */
+  color: inherit;
+}
+
+/* Hide scrollbar but keep functionality */
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

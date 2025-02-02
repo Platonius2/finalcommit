@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Portfolio Section</title>
+  <link rel="icon" type="image/png" href="logo fast forward media white.png">
+  <link rel="shortcut icon" type="image/png" href="logo fast forward media white.png">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./style team section.css">
+  <link rel="stylesheet" href="./style contact.css">
+  <link rel="stylesheet" href="./sections.css">
+  <link rel="stylesheet" href="./style-footer.css">
+  <link rel="stylesheet" href="./style-three-section.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css?family=IBM%20Plex%20Sans:300,500" rel="stylesheet">
+  
+  <!-- GSAP with Plugins - Load these first -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/CustomEase.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/BezierPlugin.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"></script>
+  <script>
+    // Register GSAP plugins and verify they're loaded
+    if (typeof gsap === 'undefined') {
+      console.error('GSAP not loaded!');
+    } else {
+      gsap.registerPlugin(CustomEase, BezierPlugin, MotionPathPlugin);
+      if (!gsap.plugins.BezierPlugin || !gsap.plugins.MotionPathPlugin) {
+        console.error('Required GSAP plugins not registered!');
+      } else {
+        console.log('GSAP and plugins loaded successfully');
+      }
+    }
+  </script>
+  
+  <!-- Three.js Dependencies - Load after GSAP -->
+  <script type="importmap">
+  {
+      "imports": {
+          "three": "https://unpkg.com/three@0.138.0/build/three.module.js",
+          "three/examples/jsm/loaders/FontLoader.js": "https://unpkg.com/three@0.138.0/examples/jsm/loaders/FontLoader.js",
+          "three/examples/jsm/geometries/TextGeometry.js": "https://unpkg.com/three@0.138.0/examples/jsm/geometries/TextGeometry.js",
+          "three/examples/jsm/postprocessing/EffectComposer.js": "https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/EffectComposer.js",
+          "three/examples/jsm/postprocessing/RenderPass.js": "https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/RenderPass.js",
+          "three/examples/jsm/postprocessing/UnrealBloomPass.js": "https://unpkg.com/three@0.138.0/examples/jsm/postprocessing/UnrealBloomPass.js"
+      }
+  }
+  </script>
+  
+  <!-- Scroll to top on refresh -->
+  <script>
+    window.onbeforeunload = function () {
+      window.scrollTo(0, 0);
+    }
+    
+    // Additional check to ensure we're at the top when the page loads
+    window.onload = function() {
+      window.scrollTo(0, 0);
+      history.scrollRestoration = 'manual';
+
+      // Add scroll event listener to handle three.js overlay visibility
+      const threeSection = document.querySelector('.three-section');
+      const portfolio = document.querySelector('#portfolio');
+      const contact = document.querySelector('#contact');
+      const scrollIndicator = document.querySelector('.scroll-indicator');
+      
+      window.addEventListener('scroll', () => {
+        const portfolioTop = portfolio.getBoundingClientRect().top;
+        const contactTop = contact.getBoundingClientRect().top;
+        const viewportHeight = window.innerHeight;
+        
+        // Handle three.js overlay
+        if (portfolioTop <= viewportHeight * 2) {
+          const progress = 1 - (portfolioTop - viewportHeight) / viewportHeight;
+          const translateY = Math.min(Math.max(progress * 100, 0), 100);
+          threeSection.style.transform = `translateY(-${translateY}vh)`;
+        } else {
+          threeSection.style.transform = 'translateY(0)';
+        }
+
+        // Handle scroll indicator visibility
+        if (contactTop <= viewportHeight) {
+          scrollIndicator.classList.add('hide');
+        } else {
+          scrollIndicator.classList.remove('hide');
+        }
+      });
+    }
+  </script>
+  
+  <!-- Module Scripts - Load last -->
+  <script type="module" src="./script-team-section.js"></script>
+  <script type="module" src="./bg test/main.js"></script>
+  <script type="module" src="./three-section/main.js"></script>
+  <script type="module" src="/src/main.jsx"></script>
+  <script type="module" src="/script.js"></script>
+  <style>
+    #gradient {
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: -1;
+        opacity: 1;
+        mix-blend-mode: normal;
+    }
+    /* Handle dynamically created NEAT caption */
+    [href*="neat.firecms.co"] {
+        transform: translateY(200vh) !important;
+        position: fixed !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        z-index: -99999 !important;
+    }
+    body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        background: transparent;
+        scroll-snap-type: y mandatory;
+        overflow-y: scroll;
+        position: relative;
+    }
+    .page-wrapper {
+        position: relative;
+        z-index: 1;
+        background: transparent;
+        width: 100%;
+        min-height: 100vh;
+    }
+    .section {
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+        background: transparent;
+    }
+    /* Three.js Overlay Styles */
+    .three-section {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: none !important;
+        mix-blend-mode: plus-lighter;
+        z-index: 2;
+        pointer-events: none;
+        will-change: transform;
+    }
+
+    .three-section canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        mix-blend-mode: plus-lighter;
+        background: none !important;
+        z-index: -2;
+    }
+
+    .canvas-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        background: none !important;
+        z-index: 2;
+    }
+
+    .triggers {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        z-index: 3;
+        pointer-events: none;
+        color: white;
+        opacity: 1;
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-weight: 400;
+        letter-spacing: 0.02em;
+        width: 100%;
+        mix-blend-mode: screen;
+    }
+
+    .triggers span {
+        display: block;
+        font-size: 48px;
+        margin: 40px 0;
+        padding: 2px 4px;
+        transition: opacity 0.5s, color 0.5s;
+        opacity: 0;
+        user-select: none;
+        visibility: hidden;
+        position: absolute;
+        pointer-events: none;
+        white-space: pre;
+    }
+
+    .triggers span.active {
+        opacity: 0;
+        color: inherit;
+    }
+
+    /* Add styles for React root section */
+    #root {
+        min-height: 100vh;
+        width: 100%;
+        scroll-snap-align: start;
+        background: transparent;
+        z-index: 1;
+        position: relative;
+    }
+
+    /* Scroll Indicator Styles */
+    .scroll-indicator {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        animation: bounce 2s infinite;
+        opacity: 0.7;
+    }
+
+    .scroll-indicator svg {
+        width: 24px;
+        height: 24px;
+        color: white;
+    }
+
+    .scroll-indicator.hide {
+        opacity: 0;
+    }
+
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateX(-50%) translateY(0);
+        }
+        40% {
+            transform: translateX(-50%) translateY(-10px);
+        }
+        60% {
+            transform: translateX(-50%) translateY(-5px);
+        }
+    }
+  </style>
+</head>
+<body>
+    <!-- Background Elements -->
+         <!-- Three.js Overlay -->
+    <div class="three-section">
+        <div class="canvas-container"></div>
+        <div class="triggers">
+            <span data-color="#00E5FF">14.8M+
+<br>VIEWS</span>
+            <span data-color="#FFA500">140+
+<br>PROJECTS</span>
+            <span data-color="#FF69B4">$50K+
+<br>REVENUE</span>
+        </div>
+    </div>
+
+
+    <!-- Background Gradient -->
+    <canvas id="gradient"></canvas>
+
+    <!-- Scroll Indicator -->
+    <div class="scroll-indicator">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m6 9 6 6 6-6"/>
+        </svg>
+    </div>
+
+    <!-- Main Content -->
+    <main class="page-wrapper">
+        <!-- Empty Section 1 -->
+        <section class="section">
+        </section>
+
+        <!-- Empty Section 2 -->
+        <section class="section">
+        </section>
+        <!-- Empty Section 3-->
+        <section class="section">
+        </section>
+
+        <!-- React Root Section -->
+        <div id="root" class="section"></div>
+
+        <!-- Section 2: Portfolio -->
+        <section id="portfolio" class="section portfolio-section">
+            <div class="section-container">
+                <div class="main-slider">
+                    <button class="slider--btn slider--btn__prev">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m15 18-6-6 6-6" />
+                        </svg>
+                    </button>
+
+                    <div class="slides__wrapper">
+                        <div class="slides">
+                            <!-- slide 1 -->
+                            <div class="slide" data-current>
+                                <div class="slide__inner">
+                                    <div class="slide--image__wrapper">
+                                        <video 
+                                            class="slide--image" 
+                                            muted 
+                                            loop 
+                                            playsinline 
+                                            preload="auto"
+                                            poster="videos/StartUp Pitching _ _Royale Games_ _ Treiler.jpg"
+                                        >
+                                            <source src="https://ffwdbucket.s3.eu-north-1.amazonaws.com/videos/StartUp+Pitching+_+_Royale+Games_+_+Treiler.mp4" type="video/mp4">
+                                        </video>
+                                        <div class="video-controls">
+                                            <button class="play-pause" aria-label="Play/Pause">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                </svg>
+                                            </button>
+                                            
+                                            <div class="video-time">0:00 / 0:00</div>
+                                            
+                                            <div class="video-slider progress-slider">
+                                                <div class="slider-track"></div>
+                                                <div class="slider-fill"></div>
+                                                <input type="range" min="0" max="100" value="0" class="slider-thumb" />
+                                            </div>
+                                            
+                                            <div class="volume-control">
+                                                <button class="volume-btn" aria-label="Volume">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                                                    </svg>
+                                                </button>
+                                                <div class="video-slider volume-slider">
+                                                    <div class="slider-track"></div>
+                                                    <div class="slider-fill"></div>
+                                                    <input type="range" min="0" max="100" value="100" class="slider-thumb" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slide-expanded-description">
+                                    <h3>Royale Games</h3>
+                                    <p>Startup pitch trailer showcasing the exciting world of competitive gaming and entertainment.</p>
+                                </div>
+                                <button class="slide--expand-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <polyline points="9 21 3 21 3 15"></polyline>
+                                        <line x1="21" y1="3" x2="14" y2="10"></line>
+                                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="slide__bg" style="--bg: url('videos/StartUp Pitching _ _Royale Games_ _ Treiler.jpg'); --dir: 0" data-current></div>
+
+                            
+                            <!-- slide 2 -->
+                            <div class="slide" data-next>
+                                <div class="slide__inner">
+                                    <div class="slide--image__wrapper">
+                                        <video 
+                                            class="slide--image" 
+                                            muted 
+                                            loop 
+                                            playsinline 
+                                            preload="auto"
+                                            poster="videos/Mayak.jpg"
+                                        >
+                                            <source src="https://ffwdbucket.s3.eu-north-1.amazonaws.com/videos/Mayak.mp4" type="video/mp4">
+                                        </video>
+                                        <div class="video-controls">
+                                            <button class="play-pause" aria-label="Play/Pause">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                </svg>
+                                            </button>
+                                            
+                                            <div class="video-time">0:00 / 0:00</div>
+                                            
+                                            <div class="video-slider progress-slider">
+                                                <div class="slider-track"></div>
+                                                <div class="slider-fill"></div>
+                                                <input type="range" min="0" max="100" value="0" class="slider-thumb" />
+                                            </div>
+                                            
+                                            <div class="volume-control">
+                                                <button class="volume-btn" aria-label="Volume">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                                                    </svg>
+                                                </button>
+                                                <div class="video-slider volume-slider">
+                                                    <div class="slider-track"></div>
+                                                    <div class="slider-fill"></div>
+                                                    <input type="range" min="0" max="100" value="100" class="slider-thumb" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slide-expanded-description">
+                                    <h3>Mayak</h3>
+                                    <p>A cinematic journey through innovative visual storytelling and compelling narrative.</p>
+                                </div>
+                                <button class="slide--expand-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <polyline points="9 21 3 21 3 15"></polyline>
+                                        <line x1="21" y1="3" x2="14" y2="10"></line>
+                                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="slide__bg" style="--bg: url('videos/Mayak.jpg'); --dir: 1" data-next></div>
+
+                            <!-- slide 3 -->
+                            <div class="slide" data-previous>
+                                <div class="slide__inner">
+                                    <div class="slide--image__wrapper">
+                                        <video 
+                                            class="slide--image" 
+                                            muted 
+                                            loop 
+                                            playsinline 
+                                            preload="auto"
+                                            poster="videos/huawei_watch_gt_3_pro_presentation_clip (720p).jpg"
+                                        >
+                                            <source src="https://ffwdbucket.s3.eu-north-1.amazonaws.com/videos/huawei_watch_gt_3_pro_presentation_clip+(720p).mp4" type="video/mp4">
+                                        </video>
+                                        <div class="video-controls">
+                                            <button class="play-pause" aria-label="Play/Pause">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                </svg>
+                                            </button>
+                                            
+                                            <div class="video-time">0:00 / 0:00</div>
+                                            
+                                            <div class="video-slider progress-slider">
+                                                <div class="slider-track"></div>
+                                                <div class="slider-fill"></div>
+                                                <input type="range" min="0" max="100" value="0" class="slider-thumb" />
+                                            </div>
+                                            
+                                            <div class="volume-control">
+                                                <button class="volume-btn" aria-label="Volume">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                                                    </svg>
+                                                </button>
+                                                <div class="video-slider volume-slider">
+                                                    <div class="slider-track"></div>
+                                                    <div class="slider-fill"></div>
+                                                    <input type="range" min="0" max="100" value="100" class="slider-thumb" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slide-expanded-description">
+                                    <h3>Huawei Watch GT 3 Pro</h3>
+                                    <p>Elegant presentation of the premium smartwatch showcasing its features and design excellence.</p>
+                                </div>
+                                <button class="slide--expand-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <polyline points="9 21 3 21 3 15"></polyline>
+                                        <line x1="21" y1="3" x2="14" y2="10"></line>
+                                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="slide__bg" style="--bg: url('videos/huawei_watch_gt_3_pro_presentation_clip (720p).jpg'); --dir: -1" data-previous></div>
+
+                            <!-- slide 4 -->
+                            <div class="slide">
+                                <div class="slide__inner">
+                                    <div class="slide--image__wrapper">
+                                        <video 
+                                            class="slide--image" 
+                                            muted 
+                                            loop 
+                                            playsinline 
+                                            preload="auto"
+                                            poster="videos/Website - Emery - ad.jpg"
+                                        >
+                                            <source src="https://ffwdbucket.s3.eu-north-1.amazonaws.com/videos/Website+-+Emery+-+ad.mp4" type="video/mp4" poster="videos/Website - Emery - ad.jpg">
+                                        </video>
+                                        <div class="video-controls">
+                                            <button class="play-pause" aria-label="Play/Pause">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                </svg>
+                                            </button>
+                                            
+                                            <div class="video-time">0:00 / 0:00</div>
+                                            
+                                            <div class="video-slider progress-slider">
+                                                <div class="slider-track"></div>
+                                                <div class="slider-fill"></div>
+                                                <input type="range" min="0" max="100" value="0" class="slider-thumb" />
+                                            </div>
+                                            
+                                            <div class="volume-control">
+                                                <button class="volume-btn" aria-label="Volume">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                                                    </svg>
+                                                </button>
+                                                <div class="video-slider volume-slider">
+                                                    <div class="slider-track"></div>
+                                                    <div class="slider-fill"></div>
+                                                    <input type="range" min="0" max="100" value="100" class="slider-thumb" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slide-expanded-description">
+                                    <h3>Emery</h3>
+                                    <p>Website promotional video highlighting modern design and engaging user experience.</p>
+                                </div>
+                                <button class="slide--expand-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <polyline points="9 21 3 21 3 15"></polyline>
+                                        <line x1="21" y1="3" x2="14" y2="10"></line>
+                                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="slide__bg" style="--bg: url('videos/Website - Emery - ad.jpg'); --dir: 1"></div>
+
+                            <!-- slide 5 -->
+                            <div class="slide">
+                                <div class="slide__inner">
+                                    <div class="slide--image__wrapper">
+                                        <video 
+                                            class="slide--image" 
+                                            muted 
+                                            loop 
+                                            playsinline 
+                                            preload="auto"
+                                            poster="videos/Test_3.jpg"
+                                        >
+                                            <source src="https://ffwdbucket.s3.eu-north-1.amazonaws.com/videos/Test_3.mp4" type="video/mp4">
+                                        </video>
+                                        <div class="video-controls">
+                                            <button class="play-pause" aria-label="Play/Pause">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                </svg>
+                                            </button>
+                                            
+                                            <div class="video-time">0:00 / 0:00</div>
+                                            
+                                            <div class="video-slider progress-slider">
+                                                <div class="slider-track"></div>
+                                                <div class="slider-fill"></div>
+                                                <input type="range" min="0" max="100" value="0" class="slider-thumb" />
+                                            </div>
+                                            
+                                            <div class="volume-control">
+                                                <button class="volume-btn" aria-label="Volume">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                                                    </svg>
+                                                </button>
+                                                <div class="video-slider volume-slider">
+                                                    <div class="slider-track"></div>
+                                                    <div class="slider-fill"></div>
+                                                    <input type="range" min="0" max="100" value="100" class="slider-thumb" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slide-expanded-description">
+                                    <h3>Test 3</h3>
+                                    <p>Creative experimental video showcasing innovative visual effects and artistic direction.</p>
+                                </div>
+                                <button class="slide--expand-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <polyline points="9 21 3 21 3 15"></polyline>
+                                        <line x1="21" y1="3" x2="14" y2="10"></line>
+                                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="slide__bg" style="--bg: url('videos/Test_3.jpg'); --dir: 1"></div>
+
+                            <!-- slide 6 -->
+                            <div class="slide">
+                                <div class="slide__inner">
+                                    <div class="slide--image__wrapper">
+                                        <video 
+                                            class="slide--image" 
+                                            muted 
+                                            loop 
+                                            playsinline 
+                                            preload="auto"
+                                            poster="videos/CRT another distortion.jpg"
+                                        >
+                                            <source src="https://ffwdbucket.s3.eu-north-1.amazonaws.com/videos/CRT+another+distortion.mp4" type="video/mp4">
+                                        </video>
+                                        <div class="video-controls">
+                                            <button class="play-pause" aria-label="Play/Pause">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                </svg>
+                                            </button>
+                                            
+                                            <div class="video-time">0:00 / 0:00</div>
+                                            
+                                            <div class="video-slider progress-slider">
+                                                <div class="slider-track"></div>
+                                                <div class="slider-fill"></div>
+                                                <input type="range" min="0" max="100" value="0" class="slider-thumb" />
+                                            </div>
+                                            
+                                            <div class="volume-control">
+                                                <button class="volume-btn" aria-label="Volume">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                                                    </svg>
+                                                </button>
+                                                <div class="video-slider volume-slider">
+                                                    <div class="slider-track"></div>
+                                                    <div class="slider-fill"></div>
+                                                    <input type="range" min="0" max="100" value="100" class="slider-thumb" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slide-expanded-description">
+                                    <h3>CRT Distortion</h3>
+                                    <p>Artistic visualization featuring retro CRT effects and unique visual distortions.</p>
+                                </div>
+                                <button class="slide--expand-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <polyline points="9 21 3 21 3 15"></polyline>
+                                        <line x1="21" y1="3" x2="14" y2="10"></line>
+                                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="slide__bg" style="--bg: url('videos/CRT another distortion.jpg'); --dir: 1"></div>
+                        </div>
+                        <div class="slides--infos">
+                            <!-- Slide Info 1 -->
+                            <div class="slide-info" data-current>
+                                <div class="slide-info__inner">
+                                    <div class="slide-info--text__wrapper">
+                                        <div data-title class="slide-info--text">
+                                            <span>Royale Games</span>
+                                        </div>
+                                        <div data-subtitle class="slide-info--text">
+                                            <span>Startup</span>
+                                        </div>
+                                        <div data-description class="slide-info--text">
+                                            <span>Gaming Entertainment</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Slide Info 2 -->
+                            <div class="slide-info" data-next>
+                                <div class="slide-info__inner">
+                                    <div class="slide-info--text__wrapper">
+                                        <div data-title class="slide-info--text">
+                                            <span>Mayak</span>
+                                        </div>
+                                        <div data-subtitle class="slide-info--text">
+                                            <span>Film</span>
+                                        </div>
+                                        <div data-description class="slide-info--text">
+                                            <span>Visual Storytelling</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Slide Info 3 -->
+                            <div class="slide-info" data-previous>
+                                <div class="slide-info__inner">
+                                    <div class="slide-info--text__wrapper">
+                                        <div data-title class="slide-info--text">
+                                            <span>Huawei Watch</span>
+                                        </div>
+                                        <div data-subtitle class="slide-info--text">
+                                            <span>Product</span>
+                                        </div>
+                                        <div data-description class="slide-info--text">
+                                            <span>GT 3 Pro</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Slide Info 4 -->
+                            <div class="slide-info">
+                                <div class="slide-info__inner">
+                                    <div class="slide-info--text__wrapper">
+                                        <div data-title class="slide-info--text">
+                                            <span>Emery</span>
+                                        </div>
+                                        <div data-subtitle class="slide-info--text">
+                                            <span>Website</span>
+                                        </div>
+                                        <div data-description class="slide-info--text">
+                                            <span>Modern Design</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Slide Info 5 -->
+                            <div class="slide-info">
+                                <div class="slide-info__inner">
+                                    <div class="slide-info--text__wrapper">
+                                        <div data-title class="slide-info--text">
+                                            <span>Test 3</span>
+                                        </div>
+                                        <div data-subtitle class="slide-info--text">
+                                            <span>Experimental</span>
+                                        </div>
+                                        <div data-description class="slide-info--text">
+                                            <span>Visual Effects</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Slide Info 6 -->
+                            <div class="slide-info">
+                                <div class="slide-info__inner">
+                                    <div class="slide-info--text__wrapper">
+                                        <div data-title class="slide-info--text">
+                                            <span>CRT Distortion</span>
+                                        </div>
+                                        <div data-subtitle class="slide-info--text">
+                                            <span>Art</span>
+                                        </div>
+                                        <div data-description class="slide-info--text">
+                                            <span>Retro Effects</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="slider--btn slider--btn__next">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m9 18 6-6-6-6" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="background-overlay"></div>
+            </div>
+        </section>
+
+        <!-- Section 4: Team -->
+        <section id="team" class="section team-section">
+            <h1 class="team-title appear">OUR TEAM</h1>
+            <div class="team-outer-container">
+                <div class="team-row">
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>John Anderson<br><span>UX/UI Designer</span></h2>
+                            <p>Leading our design team with over 8 years of experience in creating intuitive user experiences.</p>
+                        </div>
+                    </div>
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>Sarah Chen<br><span>Frontend Developer</span></h2>
+                            <p>Crafting beautiful and responsive web interfaces with modern technologies.</p>
+                        </div>
+                    </div>
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>Michael Roberts<br><span>Backend Developer</span></h2>
+                            <p>Building robust and scalable server-side solutions for our applications.</p>
+                        </div>
+                    </div>
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>Emily Martinez<br><span>Product Manager</span></h2>
+                            <p>Guiding our product vision and ensuring successful project delivery.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-row">
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>David Kim<br><span>Data Scientist</span></h2>
+                            <p>Transforming complex data into actionable insights for better decision making.</p>
+                        </div>
+                    </div>
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1573497019236-17f8177b81e8?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>Rachel Thompson<br><span>Marketing Lead</span></h2>
+                            <p>Driving growth and brand awareness through innovative marketing strategies.</p>
+                        </div>
+                    </div>
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1556157382-97eda2f9e2bf?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>James Wilson<br><span>DevOps Engineer</span></h2>
+                            <p>Ensuring smooth deployment and operation of our infrastructure.</p>
+                        </div>
+                    </div>
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>Anna Lee<br><span>QA Engineer</span></h2>
+                            <p>Maintaining high quality standards across all our products and features.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Contact -->
+        <section id="contact" class="section contact-section">
+            <div class="contact-container">
+                <div class="contact-content">
+                    <p class="contact-inquiry-text">for inquiries contact us via</p>
+                    <h1 class="contact-email">MEDIA@FFWD.SPACE</h1>
+                    <a href="mailto:MEDIA@FFWD.SPACE" target="_blank" class="contact-button">
+                        <span class="text">CONTACT VIA EMAIL</span>
+                        <span class="shimmer"></span>
+                    </a>
+                    <img src="logo fast forward media white.png" alt="Fast Forward Media Logo" class="contact-logo">
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer Wrapper -->
+        <div class="footer-wrapper">
+            <div class="footer-blur-overlay"></div>
+            <div class="footer-gradient-overlay"></div>
+            <footer id="footer">
+                <div class="col col1">
+                    <h3>FFWD</h3>
+                    <p class="company-name">Fast Forward Media</p>
+                    <img src="logo fast forward media white.png" alt="FFWD Logo" class="footer-logo">
+                    <p class="legal-name">Phithon Company LLP</p>
+                    <p class="address">128 City Rd.<br>London, EC1V 2NX</p>
+                    <p class="phone">+420736768466</p>
+                </div>
+            </footer>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script type="module" src="./script.js"></script>
+    <script type="module" src="./script-team-section.js"></script>
+    <script type="module" src="./three-section/main.js"></script>
+</body>
+</html>
+

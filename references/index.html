@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Portfolio Section</title>
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./style team section.css">
+  <link rel="stylesheet" href="./style contact.css">
+  <link rel="stylesheet" href="./sections.css">
+  <link rel="stylesheet" href="./style-footer.css">
+  <link rel="stylesheet" href="./style-three-section.css">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css?family=IBM%20Plex%20Sans:300,500" rel="stylesheet">
+  
+  <!-- Scripts - Load dependencies first -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tilt.js/1.2.1/tilt.jquery.min.js"></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js'></script>
+  <script type="module" src="./js/scroll-animation.js"></script>
+  <script type="module" src="./script.js"></script>
+  
+  <!-- Three.js import -->
+  <script type="importmap">
+  {
+      "imports": {
+          "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+          "three/examples/jsm/loaders/FontLoader.js": "https://unpkg.com/three@0.128.0/examples/jsm/loaders/FontLoader.js",
+          "three/examples/jsm/geometries/TextGeometry.js": "https://unpkg.com/three@0.128.0/examples/jsm/geometries/TextGeometry.js"
+      }
+  }
+  </script>
+  
+  <!-- Team section script -->
+  <script type="module" src="./script-team-section.js"></script>
+  
+  <!-- Particle text script -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+    import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
+    
+    // Configuration
+    const getResponsiveConfig = () => {
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        
+        // Reference sizes for scaling calculations
+        const referenceWidth = 1920;
+        const referenceHeight = 1080;
+        
+        // Calculate scale factor based only on width
+        const baseScaleFactor = screenWidth / referenceWidth;
+        const scaleFactor = screenWidth <= 1250 
+            ? Math.min(1.4, Math.max(0.4, Math.pow(baseScaleFactor, 0.4)))
+            : Math.min(1, Math.max(0.3, Math.pow(baseScaleFactor, 0.45)));
+        
+        // Text size calculations based purely on width
+        const textConfig = {
+            baseSize: screenWidth <= 1250
+                ? screenWidth * 0.08 * scaleFactor  // Slightly smaller text for better fit
+                : screenWidth * 0.04 * scaleFactor,
+            maxWidth: screenWidth * 0.85,
+            maxHeight: screenHeight * 0.25
+        };
+        
+        const baseParticleCount = 5000;
+        const particleScaleFactor = Math.max(0.2, Math.min(1, screenWidth / referenceWidth));
+        
+        return {
+            textConfig,
+            particleCount: Math.floor(baseParticleCount * particleScaleFactor),
+            particleSize: screenWidth <= 1250 
+                ? screenWidth * 0.02  // Slightly smaller particles
+                : screenWidth * 0.008,
+            defaultAnimationSpeed: 1,
+            morphAnimationSpeed: 18,
+            typeface: 'https://threejs.org/examples/fonts/droid/droid_sans_bold.typeface.json'
+        };
+    };
+
+    const config = getResponsiveConfig();
+    const animationVars = {
+        color: '#FFFFFF',
+        speed: 0.01,
+        rotation: -45,
+        particleScale: 0
+    };
+
+    // Scene Manager
+    class SceneManager {
+        constructor() {
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            this.renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true,
+                premultipliedAlpha: false
+            });
+            
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            this.renderer.setClearColor(0x000000, 0);
+            
+            const container = document.querySelector('.canvas-container');
+            container.appendChild(this.renderer.domElement);
+            
+            // Adjust camera position based on screen size
+            const aspectRatio = window.innerWidth / window.innerHeight;
+            const baseFOV = 45;
+            this.camera.fov = aspectRatio < 1 ? baseFOV * 1.5 : baseFOV;
+            const baseDistance = Math.max(100, (window.innerHeight / 2) * (aspectRatio < 1 ? 1.2 : 1));
+            this.camera.position.z = baseDistance;
+            this.camera.lookAt(this.scene.position);
+            
+            window.addEventListener('resize', () => this.onWindowResize());
+        }
+        
+        onWindowResize() {
+            const aspectRatio = window.innerWidth / window.innerHeight;
+            const baseFOV = 45;
+            this.camera.fov = aspectRatio < 1 ? baseFOV * 1.5 : baseFOV;
+            this.camera.aspect = aspectRatio;
+            const baseDistance = Math.max(100, (window.innerHeight / 2) * (aspectRatio < 1 ? 1.2 : 1));
+            this.camera.position.z = baseDistance;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        render() {
+            this.renderer.render(this.scene, this.camera);
+        }
+    }
+
+    // Particle System
+    class ParticleSystem {
+        constructor(scene) {
+            this.scene = scene;
+            this.config = getResponsiveConfig();
+            this.geometry = new THREE.BufferGeometry();
+            this.positions = new Float32Array(this.config.particleCount * 3);
+            this.scales = new Float32Array(this.config.particleCount);
+            this.setupParticles();
+        }
+        
+        setupParticles() {
+            // Initialize particles at center with zero scale
+            for (let i = 0; i < this.config.particleCount; i++) {
+                const i3 = i * 3;
+                this.positions[i3] = 0;
+                this.positions[i3 + 1] = 0;
+                this.positions[i3 + 2] = 0;
+                this.scales[i] = 0;
+            }
+            
+            this.geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
+            this.geometry.setAttribute('scale', new THREE.BufferAttribute(this.scales, 1));
+            
+            const pMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    size: { value: this.config.particleSize },
+                    color: { value: new THREE.Color(0xFFFFFF) },
+                    opacity: { value: 1.0 }
+                },
+                vertexShader: `
+                    attribute float scale;
+                    uniform float size;
+                    
+                    void main() {
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        gl_PointSize = size * scale * (300.0 / -mvPosition.z);
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    uniform vec3 color;
+                    uniform float opacity;
+                    
+                    void main() {
+                        vec2 center = gl_PointCoord - vec2(0.5);
+                        float dist = length(center);
+                        
+                        if (dist > 0.5) {
+                            discard;
+                        }
+                        
+                        float core = 1.0 - smoothstep(0.0, 0.15, dist);
+                        float innerGlow = 1.0 - smoothstep(0.15, 0.35, dist);
+                        float outerGlow = 1.0 - smoothstep(0.35, 0.5, dist);
+                        
+                        float intensity = core * 1.0 + innerGlow * 0.5 + outerGlow * 0.2;
+                        intensity = pow(intensity, 1.5);
+                        
+                        float noise = fract(sin(dot(gl_PointCoord, vec2(12.9898, 78.233))) * 43758.5453);
+                        intensity += noise * 0.015 - 0.0075;
+                        
+                        vec3 finalColor = color * (1.0 + core * 0.5);
+                        
+                        gl_FragColor = vec4(finalColor, opacity * intensity);
+                    }
+                `,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                depthTest: true
+            });
+            
+            this.points = new THREE.Points(this.geometry, pMaterial);
+            this.points.sortParticles = false;
+            this.scene.add(this.points);
+        }
+        
+        createVertices(emptyArray, points) {
+            if (!points || points.length === 0) return null;
+            
+            const positions = new Float32Array(this.config.particleCount * 3);
+            const scales = new Float32Array(this.config.particleCount);
+            
+            for (let i = 0; i < this.config.particleCount && i < points.length; i++) {
+                const i3 = i * 3;
+                if (points[i]) {
+                    positions[i3] = points[i].x || 0;
+                    positions[i3 + 1] = points[i].y || 0;
+                    positions[i3 + 2] = points[i].z || 0;
+                    scales[i] = 1;
+                }
+            }
+            
+            emptyArray.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            emptyArray.setAttribute('scale', new THREE.BufferAttribute(scales, 1));
+            return true;
+        }
+        
+        morphTo(newParticles, color = '#FFFFFF') {
+            if (!newParticles || !newParticles.attributes || !newParticles.attributes.position || !newParticles.attributes.scale) return;
+            
+            gsap.to(animationVars, {
+                duration: 0.1,
+                ease: "power4.in",
+                speed: this.config.morphAnimationSpeed / 100,
+                onComplete: () => this.slowDown()
+            });
+            
+            gsap.to(animationVars, {
+                duration: 1,
+                ease: "none",
+                color: color
+            });
+            
+            const positions = this.geometry.attributes.position.array;
+            const scales = this.geometry.attributes.scale.array;
+            const newPositions = newParticles.attributes.position.array;
+            const newScales = newParticles.attributes.scale.array;
+            
+            for (let i = 0; i < positions.length / 3; i++) {
+                const i3 = i * 3;
+                const currentVertex = {
+                    x: positions[i3],
+                    y: positions[i3 + 1],
+                    z: positions[i3 + 2],
+                    scale: scales[i]
+                };
+                
+                const targetVertex = {
+                    x: newPositions[i3],
+                    y: newPositions[i3 + 1],
+                    z: newPositions[i3 + 2],
+                    scale: newScales[i]
+                };
+                
+                const dx = targetVertex.x - currentVertex.x;
+                const dy = targetVertex.y - currentVertex.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const radius = distance * 0.8;
+                
+                const delay = Math.random() * 0.2;
+                const duration = 1.0 + Math.random() * 0.25;
+                
+                gsap.to(currentVertex, {
+                    duration: duration,
+                    x: targetVertex.x,
+                    y: targetVertex.y,
+                    z: targetVertex.z,
+                    scale: targetVertex.scale,
+                    delay: delay,
+                    ease: "power1.inOut",
+                    onUpdate: () => {
+                        positions[i3] = currentVertex.x;
+                        positions[i3 + 1] = currentVertex.y;
+                        positions[i3 + 2] = currentVertex.z;
+                        scales[i] = currentVertex.scale;
+                        this.geometry.attributes.position.needsUpdate = true;
+                        this.geometry.attributes.scale.needsUpdate = true;
+                    }
+                });
+            }
+            
+            gsap.to(animationVars, {
+                duration: 1,
+                ease: "power1.inOut",
+                rotation: animationVars.rotation === 45 ? -45 : 45
+            });
+        }
+        
+        slowDown() {
+            gsap.to(animationVars, {
+                duration: 0.3,
+                ease: "power2.out",
+                speed: this.config.defaultAnimationSpeed / 100,
+                delay: 0.2
+            });
+        }
+        
+        update() {
+            if (this.points && this.points.material) {
+                this.points.material.uniforms.color.value.set(animationVars.color);
+            }
+        }
+    }
+
+    // Updated Text Manager
+    class TextManager {
+        constructor(particleSystem) {
+            this.particleSystem = particleSystem;
+            this.config = getResponsiveConfig();
+            this.texts = [];
+            this.triggers = document.querySelectorAll('.triggers span');
+            this.currentFont = null;
+            this.currentIndex = 0;
+            this.loadFont();
+            this.setupResizeHandler();
+        }
+        
+        setupResizeHandler() {
+            let resizeTimeout;
+            let lastWidth = window.innerWidth;
+            
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                const currentWidth = window.innerWidth;
+                const crossingBreakpoint = (currentWidth < 768 && lastWidth >= 768) || 
+                                         (currentWidth >= 768 && lastWidth < 768);
+                resizeTimeout = setTimeout(() => {
+                    if (crossingBreakpoint || Math.abs(currentWidth - lastWidth) > 50) {
+                        if (this.currentFont) {
+                            Array.from(this.triggers).forEach((trigger, idx) => {
+                                this.createText(trigger, idx, this.currentFont);
+                            });
+                            this.updateActiveText(this.currentIndex);
+                        }
+                    }
+                    lastWidth = currentWidth;
+                }, 250);
+            });
+        }
+        
+        loadFont() {
+            const loader = new FontLoader();
+            
+            loader.load(this.config.typeface, 
+                (font) => {
+                    console.log('Font loaded successfully');
+                    this.currentFont = font;
+                    
+                    requestAnimationFrame(() => {
+                        Array.from(this.triggers).forEach((trigger, idx) => {
+                            this.createText(trigger, idx, font);
+                        });
+                        this.updateActiveText(0);
+                    });
+                },
+                undefined,
+                (error) => {
+                    console.error('Error loading font:', error);
+                }
+            );
+        }
+        
+        updateActiveText(index) {
+            this.currentIndex = index;
+            Array.from(this.triggers).forEach(trigger => {
+                trigger.classList.remove('active');
+            });
+            
+            this.triggers[index].classList.add('active');
+            
+            if (this.texts[index] && this.texts[index].particles) {
+                this.particleSystem.morphTo(this.texts[index].particles, this.triggers[index].dataset.color);
+            }
+        }
+        
+        createText(trigger, idx, font) {
+            try {
+                if (!font) return;
+                
+                this.texts[idx] = {};
+                
+                const geometry = new TextGeometry(trigger.textContent, {
+                    font: font,
+                    size: this.config.textConfig.baseSize,
+                    height: 0,
+                    curveSegments: 4,
+                    bevelEnabled: false
+                });
+                
+                geometry.computeBoundingBox();
+                const box = geometry.boundingBox;
+                const centerOffset = new THREE.Vector3();
+                box.getCenter(centerOffset);
+                geometry.translate(-centerOffset.x, -centerOffset.y, -centerOffset.z);
+                
+                this.texts[idx].geometry = geometry;
+                this.texts[idx].particles = new THREE.BufferGeometry();
+                
+                requestAnimationFrame(() => {
+                    const points = this.generateGridPoints(geometry);
+                    if (points && points.length > 0) {
+                        this.particleSystem.createVertices(this.texts[idx].particles, points);
+                        if (idx === 0) {
+                            this.particleSystem.morphTo(this.texts[idx].particles, trigger.dataset.color);
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error in createText:', error);
+            }
+        }
+        
+        generateGridPoints(geometry) {
+            const points = [];
+            const box = geometry.boundingBox;
+            const width = box.max.x - box.min.x;
+            const height = box.max.y - box.min.y;
+            
+            const aspectRatio = width / height;
+            const baseGridSize = Math.sqrt(this.config.particleCount);
+            const particlesPerRow = Math.ceil(baseGridSize * Math.sqrt(aspectRatio) * 1.2);
+            const particlesPerCol = Math.ceil(baseGridSize / Math.sqrt(aspectRatio) * 1.2);
+            
+            const stepX = width / (particlesPerRow - 1);
+            const stepY = height / (particlesPerCol - 1);
+            
+            const raycaster = new THREE.Raycaster();
+            const direction = new THREE.Vector3(0, 0, 1);
+            const origin = new THREE.Vector3();
+            
+            const tempGeometry = geometry.clone();
+            const material = new THREE.MeshBasicMaterial();
+            const mesh = new THREE.Mesh(tempGeometry, material);
+            
+            const gridPositions = [];
+            for (let i = 0; i < particlesPerRow; i++) {
+                for (let j = 0; j < particlesPerCol; j++) {
+                    const x = box.min.x + (i * stepX);
+                    const y = box.min.y + (j * stepY);
+                    gridPositions.push([x, y]);
+                }
+            }
+            
+            for (let i = gridPositions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [gridPositions[i], gridPositions[j]] = [gridPositions[j], gridPositions[i]];
+            }
+            
+            let totalPoints = 0;
+            for (const [x, y] of gridPositions) {
+                if (totalPoints >= this.config.particleCount) break;
+                
+                origin.set(x, y, -1);
+                raycaster.set(origin, direction);
+                const intersects = raycaster.intersectObject(mesh);
+                
+                if (intersects.length > 0) {
+                    points.push(new THREE.Vector3(x, y, 0));
+                    totalPoints++;
+                }
+            }
+            
+            material.dispose();
+            tempGeometry.dispose();
+            
+            return points;
+        }
+    }
+
+    // Scroll Animation
+    class ScrollAnimation {
+        constructor(textManager) {
+            this.textManager = textManager;
+            this.triggers = document.querySelectorAll('.triggers span');
+            this.currentIndex = -1;
+            
+            this.init();
+        }
+        
+        init() {
+            this.setupIntersectionObserver();
+        }
+        
+        setupIntersectionObserver() {
+            const options = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.5
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Find the index of the current trigger
+                        const index = Array.from(this.triggers).indexOf(entry.target);
+                        if (index !== -1) {
+                            this.textManager.updateActiveText(index);
+                        }
+                    }
+                });
+            }, options);
+            
+            this.triggers.forEach(trigger => observer.observe(trigger));
+        }
+    }
+
+    // Initialize Application
+    class App {
+        constructor() {
+            this.preloadResources();
+        }
+        
+        async preloadResources() {
+            const loadingPromises = [];
+            loadingPromises.push(this.initThreeComponents());
+            await Promise.all(loadingPromises);
+            this.init();
+        }
+        
+        async initThreeComponents() {
+            this.sceneManager = new SceneManager();
+            this.particleSystem = new ParticleSystem(this.sceneManager.scene);
+            this.textManager = new TextManager(this.particleSystem);
+            this.scrollAnimation = new ScrollAnimation(this.textManager);
+        }
+        
+        init() {
+            this.animate();
+        }
+        
+        animate() {
+            requestAnimationFrame(() => this.animate());
+            this.particleSystem.update();
+            this.sceneManager.render();
+        }
+    }
+
+    // Start the application when the window loads
+    window.addEventListener('load', () => {
+        new App();
+    });
+  </script>
+  <style>
+    #gradient {
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 0;
+        opacity: 1;
+        mix-blend-mode: normal;
+        pointer-events: none;
+    }
+    /* Handle dynamically created NEAT caption */
+    [href*="neat.firecms.co"] {
+        transform: translateY(200vh) !important;
+        position: fixed !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        z-index: -99999 !important;
+    }
+    body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        background-color: #000000;
+        scroll-snap-type: y mandatory;
+        overflow-y: scroll;
+        position: relative;
+    }
+    .page-wrapper {
+        position: relative;
+        z-index: 1;
+        background: transparent;
+        width: 100%;
+        min-height: 100vh;
+    }
+    .section {
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    /* Updated Particle Text Section Styles */
+    .three-section {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        isolation: isolate;
+        background: transparent;
+    }
+
+    .canvas-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .triggers {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        z-index: 2;
+        pointer-events: none;
+        color: white;
+        opacity: 1;
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-weight: 400;
+        letter-spacing: 0.02em;
+        width: 100%;
+    }
+
+    .triggers span {
+        display: block;
+        font-size: 48px;
+        margin: 40px 0;
+        padding: 2px 4px;
+        transition: opacity 0.5s, color 0.5s;
+        opacity: 0;
+        user-select: none;
+    }
+
+    .triggers span.active {
+        opacity: 1;
+        color: inherit;
+    }
+
+    /* Ensure proper stacking context */
+    .section.three-section {
+        opacity: 1 !important;
+        visibility: visible !important;
+        background: transparent;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Hide scrollbar but keep functionality */
+    ::-webkit-scrollbar {
+        display: none;
+    }
+
+    * {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+  </style>
+  <!-- Add Neat dependency -->
+  <script type="module" src="https://unpkg.com/@firecms/neat@latest/dist/index.es.js"></script>
+</head>
+<body>
+    <!-- Background Gradient -->
+    <canvas id="gradient"></canvas>
+    <script type="module" src="./bg test/main.js"></script>
+
+    <!-- Non-React Sections -->
+    <main class="page-wrapper">
+        <!-- Navigation Dots -->
+        <nav class="section-nav">
+            <ul>
+                <li><button data-section="three-section" class="active"></button></li>
+                <li><button data-section="portfolio"></button></li>
+                <li><button data-section="team"></button></li>
+                <li><button data-section="contact"></button></li>
+            </ul>
+        </nav>
+
+        <!-- Particle Text Section -->
+        <section class="section three-section">
+            <div class="canvas-container"></div>
+            <div class="triggers">
+                <span data-color="#00E5FF">14.8M+ VIEWS</span>
+                <span data-color="#FFA500">140+ PROJECTS</span>
+                <span data-color="#FF69B4">$50K+ REVENUE</span>
+            </div>
+        </section>
+
+        <!-- React Root -->
+         <section>
+            <div id="root"></div>
+         </section>
+
+        <!-- Overlay for expanded slides -->
+        <div class="overlay"></div>
+        <div class="expanded-info">
+            <div class="expanded-info--text">
+                <span data-title>Press ESC to close</span>
+                <span data-subtitle>Use arrow keys to navigate</span>
+            </div>
+        </div>
+
+        <!-- Section 2: Portfolio -->
+        <section id="portfolio" class="section portfolio-section">
+            <div class="section-container">
+                <div class="main-slider">
+                    <button class="slider--btn slider--btn__prev">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m15 18-6-6 6-6" />
+                        </svg>
+                    </button>
+
+                    <div class="slides__wrapper">
+                        <div class="slides">
+                            <!-- slide 1 -->
+                            <div class="slide" data-current>
+                                <div class="slide__inner">
+                                    <div class="slide--image__wrapper">
+                                        <video 
+                                            class="slide--image" 
+                                            autoplay 
+                                            muted 
+                                            loop 
+                                            playsinline 
+                                            preload="auto"
+                                            poster="https://devloop01.github.io/voyage-slider/images/scotland-mountains.jpg"
+                                        >
+                                            <source src="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" type="video/mp4">
+                                        </video>
+                                        <div class="video-controls">
+                                            <button class="play-pause" aria-label="Play/Pause">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                </svg>
+                                            </button>
+                                            
+                                            <div class="video-time">0:00 / 0:00</div>
+                                            
+                                            <div class="video-slider progress-slider">
+                                                <div class="slider-track"></div>
+                                                <div class="slider-fill"></div>
+                                                <input type="range" min="0" max="100" value="0" class="slider-thumb" />
+                                            </div>
+                                            
+                                            <div class="volume-control">
+                                                <button class="volume-btn" aria-label="Volume">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                                                    </svg>
+                                                </button>
+                                                <div class="video-slider volume-slider">
+                                                    <div class="slider-track"></div>
+                                                    <div class="slider-fill"></div>
+                                                    <input type="range" min="0" max="100" value="100" class="slider-thumb" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="slide--expand-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <polyline points="9 21 3 21 3 15"></polyline>
+                                        <line x1="21" y1="3" x2="14" y2="10"></line>
+                                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="slide__bg" style="--bg: url(https://devloop01.github.io/voyage-slider/images/scotland-mountains.jpg); --dir: 0" data-current></div>
+
+                            <!-- slide 2 -->
+                            <div class="slide" data-next>
+                                <div class="slide__inner">
+                                    <div class="slide--image__wrapper">
+                                        <img class="slide--image" src="
+https://devloop01.github.io/voyage-slider/images/machu-pichu.jpg" alt="Image 2" />
+                                    </div>
+                                </div>
+                                <button class="slide--expand-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <polyline points="9 21 3 21 3 15"></polyline>
+                                        <line x1="21" y1="3" x2="14" y2="10"></line>
+                                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="slide__bg" style="--bg: url(https://devloop01.github.io/voyage-slider/images/machu-pichu.jpg); --dir: 1" data-next></div>
+
+                            <!-- slide 3 -->
+                            <div class="slide" data-previous>
+                                <div class="slide__inner">
+                                    <div class="slide--image__wrapper">
+                                        <img class="slide--image" src="https://devloop01.github.io/voyage-slider/images/chamonix.jpg" alt="Image 3" />
+                                    </div>
+                                </div>
+                                <button class="slide--expand-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <polyline points="9 21 3 21 3 15"></polyline>
+                                        <line x1="21" y1="3" x2="14" y2="10"></line>
+                                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="slide__bg" style="--bg: url(https://devloop01.github.io/voyage-slider/images/chamonix.jpg); --dir: -1" data-previous></div>
+
+                            <!-- slide 4 -->
+                            <div class="slide">
+                                <div class="slide__inner">
+                                    <div class="slide--image__wrapper">
+                                        <img class="slide--image" src="https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1920" alt="Image 4" />
+                                    </div>
+                                </div>
+                                <button class="slide--expand-btn">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <polyline points="9 21 3 21 3 15"></polyline>
+                                        <line x1="21" y1="3" x2="14" y2="10"></line>
+                                        <line x1="3" y1="21" x2="10" y2="14"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="slide__bg" style="--bg: url(https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1920); --dir: 1"></div>
+                        </div>
+                        <div class="slides--infos">
+                            <!-- Slide Info 1 -->
+                            <div class="slide-info" data-current>
+                                <div class="slide-info__inner">
+                                    <div class="slide-info--text__wrapper">
+                                        <div data-title class="slide-info--text">
+                                            <span>Highlands</span>
+                                        </div>
+                                        <div data-subtitle class="slide-info--text">
+                                            <span>Scotland</span>
+                                        </div>
+                                        <div data-description class="slide-info--text">
+                                            <span>The mountains are calling
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Slide Info 2 -->
+                            <div class="slide-info" data-next>
+                                <div class="slide-info__inner">
+                                    <div class="slide-info--text__wrapper">
+                                        <div data-title class="slide-info--text">
+                                            <span>Machu Pichu</span>
+                                        </div>
+                                        <div data-subtitle class="slide-info--text">
+                                            <span>Peru</span>
+                                        </div>
+                                        <div data-description class="slide-info--text">
+                                            <span>Adventure is never far away</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Slide Info 3 -->
+                            <div class="slide-info" data-previous>
+                                <div class="slide-info__inner">
+                                    <div class="slide-info--text__wrapper">
+                                        <div data-title class="slide-info--text">
+                                            <span>Chamonix</span>
+                                        </div>
+                                        <div data-subtitle class="slide-info--text">
+                                            <span>France</span>
+                                        </div>
+                                        <div data-description class="slide-info--text">
+                                            <span>Let your dreams come true</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Slide Info 4 -->
+                            <div class="slide-info">
+                                <div class="slide-info__inner">
+                                    <div class="slide-info--text__wrapper">
+                                        <div data-title class="slide-info--text">
+                                            <span>Dolomites</span>
+                                        </div>
+                                        <div data-subtitle class="slide-info--text">
+                                            <span>Italy</span>
+                                        </div>
+                                        <div data-description class="slide-info--text">
+                                            <span>Where nature meets wonder</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="slider--btn slider--btn__next">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m9 18 6-6-6-6" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="background-overlay"></div>
+            </div>
+        </section>
+
+        <!-- Section 4: Team -->
+        <section id="team" class="section team-section">
+            <h1 class="team-title appear">OUR TEAM</h1>
+            <div class="team-outer-container">
+                <div class="team-row">
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>John Anderson<br><span>UX/UI Designer</span></h2>
+                            <p>Leading our design team with over 8 years of experience in creating intuitive user experiences.</p>
+                        </div>
+                    </div>
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>Sarah Chen<br><span>Frontend Developer</span></h2>
+                            <p>Crafting beautiful and responsive web interfaces with modern technologies.</p>
+                        </div>
+                    </div>
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>Michael Roberts<br><span>Backend Developer</span></h2>
+                            <p>Building robust and scalable server-side solutions for our applications.</p>
+                        </div>
+                    </div>
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>Emily Martinez<br><span>Product Manager</span></h2>
+                            <p>Guiding our product vision and ensuring successful project delivery.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-row">
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>David Kim<br><span>Data Scientist</span></h2>
+                            <p>Transforming complex data into actionable insights for better decision making.</p>
+                        </div>
+                    </div>
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1573497019236-17f8177b81e8?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>Rachel Thompson<br><span>Marketing Lead</span></h2>
+                            <p>Driving growth and brand awareness through innovative marketing strategies.</p>
+                        </div>
+                    </div>
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1556157382-97eda2f9e2bf?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>James Wilson<br><span>DevOps Engineer</span></h2>
+                            <p>Ensuring smooth deployment and operation of our infrastructure.</p>
+                        </div>
+                    </div>
+                    <div class="card appear">
+                        <div class="img_box" style="background-image: url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400')">
+                            <div class="img_overlay"></div>
+                        </div>
+                        <div class="content">
+                            <h2>Anna Lee<br><span>QA Engineer</span></h2>
+                            <p>Maintaining high quality standards across all our products and features.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Contact -->
+        <section id="contact" class="section contact-section">
+            <div class="contact-container">
+                <div class="contact-content">
+                    <p class="contact-inquiry-text">for inquiries contact us via</p>
+                    <h1 class="contact-email">MEDIA@FFWD.SPACE</h1>
+                    <button class="contact-button" onclick="window.location.href='mailto:MEDIA@FFWD.SPACE'">
+                        <span class="text">CONTACT VIA EMAIL</span>
+                        <span class="shimmer"></span>
+                    </button>
+                    <img src="logo fast forward media white.png" alt="Fast Forward Media Logo" class="contact-logo">
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer Wrapper -->
+        <div class="footer-wrapper">
+            <div class="footer-blur-overlay"></div>
+            <div class="footer-gradient-overlay"></div>
+            <footer id="footer">
+                <div class="col col1">
+                    <h3>FFWD</h3>
+                    <p class="company-name">Fast Forward Media</p>
+                    <img src="logo fast forward media white.png" alt="FFWD Logo" class="footer-logo">
+                    <p class="legal-name">Phithon Company LLP</p>
+                    <p class="address">128 City Rd.<br>London, EC1V 2NX</p>
+                    <p class="phone">+420736768466</p>
+                </div>
+            </footer>
+        </div>
+    </main>
+</body>
+</html>
+
