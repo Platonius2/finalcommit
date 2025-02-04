@@ -204,7 +204,7 @@ const CompanyName = styled.span`
 const ClientLogos = () => {
     const logos = [
         {
-            name: 'Dark Matter Design',
+            name: 'Dark Matter Design / The Ifographics Show',
             url: '/logos/Dark Matter Design.jpg',
             website: 'https://darkmatterdesign.com'
         },

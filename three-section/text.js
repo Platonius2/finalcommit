@@ -108,11 +108,24 @@ export class TextManager {
         // Add active class to current trigger
         this.triggers[index].classList.add('active');
         
-        // Morph to new text
-        this.particleSystem.morphTo(
-            this.texts[index].particles, 
-            this.triggers[index].dataset.color || '#FFFFFF'
-        );
+        // Ensure all texts are properly initialized before morphing
+        if (!this.texts.every(text => text && text.particles)) {
+            console.warn('Not all texts are properly initialized');
+            return;
+        }
+
+        // Cache current text for smooth transition
+        const currentText = this.texts[this.currentIndex];
+        const targetText = this.texts[index];
+        
+        // Ensure smooth transition between texts
+        if (currentText && currentText.particles && targetText && targetText.particles) {
+            // Morph to new text with proper color transition
+            this.particleSystem.morphTo(
+                targetText.particles, 
+                this.triggers[index].dataset.color || '#FFFFFF'
+            );
+        }
     }
 
     createText(trigger, idx, font) {

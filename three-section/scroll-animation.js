@@ -4,6 +4,8 @@ export class ScrollAnimation {
     constructor(textManager) {
         this.textManager = textManager;
         this.isLocked = true; // Start with scroll locked
+        this.isAnimating = false; // Track animation state
+        this.animationTimeout = null; // For debouncing
         this.setupScrollHandler();
         this.setupIntersectionObserver();
         
@@ -44,11 +46,19 @@ export class ScrollAnimation {
     setupScrollHandler() {
         // Handle wheel events for the Three.js section
         window.addEventListener('wheel', (e) => {
-            // Only handle scroll if we're in the first section
-            if (!this.isLocked) return;
+            // Only handle scroll if we're in the first section and not currently animating
+            if (!this.isLocked || this.isAnimating) return;
 
             e.preventDefault();
             const scrollingDown = e.deltaY > 0;
+            
+            // Clear any pending animation timeout
+            if (this.animationTimeout) {
+                clearTimeout(this.animationTimeout);
+            }
+
+            // Set animating state
+            this.isAnimating = true;
             
             if (scrollingDown && this.textManager.currentIndex < 2) {
                 this.textManager.currentIndex++;
@@ -56,27 +66,46 @@ export class ScrollAnimation {
                 
                 // If we've reached the last text ($50K+ REVENUE), unlock scrolling
                 if (this.textManager.currentIndex === 2) {
-                    this.isLocked = false;
-                    window.threeJsComplete = true; // Signal that Three.js section is complete
+                    this.animationTimeout = setTimeout(() => {
+                        this.isLocked = false;
+                        window.threeJsComplete = true; // Signal that Three.js section is complete
+                        this.isAnimating = false;
+                    }, 1000); // Wait for animation to complete
+                } else {
+                    this.animationTimeout = setTimeout(() => {
+                        this.isAnimating = false;
+                    }, 1000); // Wait for animation to complete
                 }
             } else if (!scrollingDown && this.textManager.currentIndex > 0) {
                 this.textManager.currentIndex--;
                 this.textManager.updateActiveText(this.textManager.currentIndex);
                 this.isLocked = true; // Re-lock if scrolling back up
                 window.threeJsComplete = false; // Reset completion flag when scrolling back
+                
+                this.animationTimeout = setTimeout(() => {
+                    this.isAnimating = false;
+                }, 1000); // Wait for animation to complete
+            } else {
+                this.isAnimating = false;
             }
         }, { passive: false });
 
         // Handle touch events for mobile
         let touchStartY = 0;
+        let lastTouchTime = 0;
+        const touchThreshold = 250; // Minimum time between touch events
         
         window.addEventListener('touchstart', (e) => {
-            if (!this.isLocked) return;
+            if (!this.isLocked || this.isAnimating) return;
             touchStartY = e.touches[0].clientY;
+            lastTouchTime = Date.now();
         }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
-            if (!this.isLocked) return;
+            if (!this.isLocked || this.isAnimating) return;
+
+            const now = Date.now();
+            if (now - lastTouchTime < touchThreshold) return;
 
             e.preventDefault();
             const touchY = e.touches[0].clientY;
@@ -84,21 +113,38 @@ export class ScrollAnimation {
             const scrollingDown = deltaY > 0;
 
             if (Math.abs(deltaY) > 5) { // Small threshold for touch movement
+                this.isAnimating = true;
+                
                 if (scrollingDown && this.textManager.currentIndex < 2) {
                     this.textManager.currentIndex++;
                     this.textManager.updateActiveText(this.textManager.currentIndex);
                     
                     // If we've reached the last text ($50K+ REVENUE), unlock scrolling
                     if (this.textManager.currentIndex === 2) {
-                        this.isLocked = false;
-                        window.threeJsComplete = true; // Signal that Three.js section is complete
+                        this.animationTimeout = setTimeout(() => {
+                            this.isLocked = false;
+                            window.threeJsComplete = true;
+                            this.isAnimating = false;
+                        }, 1000);
+                    } else {
+                        this.animationTimeout = setTimeout(() => {
+                            this.isAnimating = false;
+                        }, 1000);
                     }
                 } else if (!scrollingDown && this.textManager.currentIndex > 0) {
                     this.textManager.currentIndex--;
                     this.textManager.updateActiveText(this.textManager.currentIndex);
-                    this.isLocked = true; // Re-lock if scrolling back up
-                    window.threeJsComplete = false; // Reset completion flag when scrolling back
+                    this.isLocked = true;
+                    window.threeJsComplete = false;
+                    
+                    this.animationTimeout = setTimeout(() => {
+                        this.isAnimating = false;
+                    }, 1000);
+                } else {
+                    this.isAnimating = false;
                 }
+                
+                lastTouchTime = now;
             }
             touchStartY = touchY;
         }, { passive: false });
