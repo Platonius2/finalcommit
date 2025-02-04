@@ -91,6 +91,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  align-items: center;
+  width: 100%;
 }
 
 .member-name {
@@ -98,12 +100,16 @@
   font-size: clamp(0.9rem, 1.5vw, 1.1rem);
   font-weight: 600;
   margin: 0;
+  text-align: center;
+  width: 100%;
 }
 
 .member-role {
   color: rgba(255, 255, 255, 0.8);
   font-size: clamp(0.8rem, 1.2vw, 0.9rem);
   margin: 0;
+  text-align: center;
+  width: 100%;
 }
 
 .member-bio {
@@ -112,6 +118,8 @@
   line-height: 1.3;
   margin: 0;
   max-width: 200px;
+  text-align: center;
+  width: 100%;
 }
 
 /* Animation delays */
